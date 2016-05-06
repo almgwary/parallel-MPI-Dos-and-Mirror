@@ -298,7 +298,10 @@ void mirror (char *url ){
 	char * command  =   (char *) malloc(100+ strlen(url)+ strlen(my_rank_char) );
 	
 	// creating command
-	strcpy(command, "wget -r -l 2  -e robots=off --mirror -p --convert-links -P ./mirrorFiles/");
+	// recursiv
+	//strcpy(command, "wget -r -l 2  -e robots=off --mirror -p --convert-links -P ./mirrorFiles/");
+	// not recursiv
+	strcpy(command, "wget   -l 2  -e robots=off --mirror -p --convert-links -P ./mirrorFiles/");
 	strcat(command, my_rank_char);
 	strcat(command, " ");
 	strcat(command, url);
