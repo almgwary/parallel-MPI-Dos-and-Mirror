@@ -11,12 +11,27 @@
 #include <time.h>
 #include <math.h> 
 
+
    /****************************************
 	* This code run ping,floode, mirror in with parallel processes
 	* 
 	* in Mirror : master collect basic links then slave downlouding pages
+	*
 	**/
-	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 int my_rank;
 int size ;
 int tag;
@@ -47,6 +62,8 @@ void runMirror (char * url) ;
 void runPing (char * ip);
 // all processes runFloode
 void runFloode (char * ip);
+//mirror multi urls form file
+void runMirrorFromFile();
 
 int main(int argc, char  *argv[])
 {
@@ -62,7 +79,7 @@ int main(int argc, char  *argv[])
  	int operation ; 
  	if (my_rank==0)
  	{
- 		printf("Choose Operation\n[0] mirror\n[1] ping\n[2] flode\n[3] CollectAndmirror\n");
+ 		printf("Choose Operation\n[0] mirror\n[1] ping\n[2] flode\n[3] CollectAndmirror\n[4] mirrorFromFile\n");
  		scanf("%d",&operation); 		
  	}
  	// sending operations to processes
@@ -79,6 +96,9 @@ int main(int argc, char  *argv[])
  	}else if (operation == 3)
  	{
  		 runMirror("http://www.w3schools.com/html/html_links.asp");
+ 	}else if (operation == 4)
+ 	{
+ 		 runMirrorFromFile();
  	}
 
  	
@@ -103,6 +123,56 @@ int main(int argc, char  *argv[])
 	MPI_Finalize();
  	return 0;	 	
  }
+
+
+//mirror multi urls form file
+void runMirrorFromFile(){
+
+	if (my_rank == 0 ) // master read urls form file
+	{
+		char * line = NULL;
+	    size_t len = 0;
+	    ssize_t read;
+		FILE *file= fopen("urls.txt","r+"); //readFromFile
+		if(file!=NULL){
+			while ((read = getline(&line, &len, file)) != -1) {
+		       // printf("Retrieved line of length %zu :\n", read);
+		        
+		        linkCount++;
+				memcpy(&links[linkCount*link_size],line,link_size);
+				 
+				printf("Link ~  %s \n", &links[linkCount*link_size]);
+		    	 
+		    }
+			fclose(file);
+		}else{printf("unable to open file");}
+	}
+
+
+
+	//1. master bcast links count
+ 	MPI_Bcast (&linkCount, 1, MPI_INT,0, MPI_COMM_WORLD);
+ 	
+
+ 	if (linkCount > -1) // there exist some links
+ 	{
+ 		//1. master bcast links array
+ 		MPI_Bcast (&links, 100*1035, MPI_CHAR,0, MPI_COMM_WORLD);
+ 	}
+
+
+ 	//3. each process take subGroup of array and start dawenlouding dawenloud 
+ 	int smallCount =  linkCount / size ;
+ 	int remaining =  linkCount % size ;
+ 	int i = 0;
+ 	for (i ; i < smallCount; ++i)
+ 	{
+ 		mirror(&links[my_rank*smallCount + i] );
+ 	} 
+
+
+}
+
 
 // all processes runMirror
 void runMirror (char * url){
@@ -289,4 +359,6 @@ void printCurrentLinks(){
   
 
  	 
-  
+ 
+
+ 
